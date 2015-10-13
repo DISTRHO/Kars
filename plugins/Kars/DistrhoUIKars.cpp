@@ -28,10 +28,10 @@ DistrhoUIKars::DistrhoUIKars()
       fImgBackground(Art::backgroundData, Art::backgroundWidth, Art::backgroundHeight)
 {
     // sustain switch
-    Image switchImageNormal(Art::switchData, Art::switchWidth, Art::switchHeight);
-    Image switchImageDown(Art::switchData, Art::switchWidth, Art::switchHeight);
+    Image switchImageNormal(Art::switchData, Art::switchWidth, Art::switchHeight/2);
+    Image switchImageDown(Art::switchData+(Art::switchWidth*Art::switchHeight/2*4), Art::switchWidth, Art::switchHeight/2);
     fSwitchSustain = new ImageSwitch(this, switchImageNormal, switchImageDown);
-    fSwitchSustain->setAbsolutePos(505, 5);
+    fSwitchSustain->setAbsolutePos(Art::backgroundWidth/2-Art::switchWidth/2, Art::backgroundHeight/2-Art::switchHeight/4);
     fSwitchSustain->setId(DistrhoPluginKars::paramSustain);
     fSwitchSustain->setCallback(this);
 }
