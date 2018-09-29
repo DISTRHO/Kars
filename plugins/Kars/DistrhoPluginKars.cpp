@@ -23,6 +23,8 @@ START_NAMESPACE_DISTRHO
 DistrhoPluginKars::DistrhoPluginKars()
     : Plugin(paramCount, 0, 0), // 0 programs, 0 states
       fSustain(false),
+      fRelease(0.01),
+      fVolume(75.0f),
       fSampleRate(getSampleRate()),
       fBlockStart(0)
 {
@@ -38,15 +40,35 @@ DistrhoPluginKars::DistrhoPluginKars()
 
 void DistrhoPluginKars::initParameter(uint32_t index, Parameter& parameter)
 {
-    if (index != 0)
-        return;
-
-    parameter.hints      = kParameterIsAutomable|kParameterIsBoolean;
-    parameter.name       = "Sustain";
-    parameter.symbol     = "sustain";
-    parameter.ranges.def = 0.0f;
-    parameter.ranges.min = 0.0f;
-    parameter.ranges.max = 1.0f;
+    switch (index)
+    {
+    case paramSustain:
+        parameter.hints      = kParameterIsAutomable|kParameterIsBoolean;
+        parameter.name       = "Sustain";
+        parameter.symbol     = "sustain";
+        parameter.ranges.def = 0.0f;
+        parameter.ranges.min = 0.0f;
+        parameter.ranges.max = 1.0f;
+        break;
+    case paramRelease:
+        parameter.hints      = kParameterIsAutomable;
+        parameter.name       = "Release";
+        parameter.symbol     = "release";
+        parameter.unit       = "s";
+        parameter.ranges.def = 0.01f;
+        parameter.ranges.min = 0.0f;
+        parameter.ranges.max = 5.0f;
+        break;
+    case paramVolume:
+        parameter.hints      = kParameterIsAutomable;
+        parameter.name       = "Volume";
+        parameter.symbol     = "volume";
+        parameter.unit       = "%";
+        parameter.ranges.def = 75.0f;
+        parameter.ranges.min = 0.0f;
+        parameter.ranges.max = 100.0f;
+        break;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -54,18 +76,30 @@ void DistrhoPluginKars::initParameter(uint32_t index, Parameter& parameter)
 
 float DistrhoPluginKars::getParameterValue(uint32_t index) const
 {
-    if (index != 0)
-        return 0.0f;
+    switch (index)
+    {
+    case paramSustain: return fSustain ? 1.0f : 0.0f;
+    case paramRelease: return fRelease;
+    case paramVolume:  return fVolume;
+    }
 
-    return fSustain ? 1.0f : 0.0f;
+    return 0.0f;
 }
 
 void DistrhoPluginKars::setParameterValue(uint32_t index, float value)
 {
-    if (index != 0)
-        return;
-
-    fSustain = value > 0.5f;
+    switch (index)
+    {
+    case paramSustain:
+        fSustain = value > 0.5f;
+        break;
+    case paramRelease:
+        fRelease = value;
+        break;
+    case paramVolume:
+        fVolume = value;
+        break;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -179,11 +213,10 @@ private:
 void DistrhoPluginKars::run(const float**, float** outputs, uint32_t frames, const MidiEvent* midiEvents, uint32_t midiEventCount)
 {
     uint8_t note, velo;
+    std::memset(outputs[0], 0, sizeof(float)*frames);
 
     for (AudioMidiSyncHelper amsh(outputs, frames, midiEvents, midiEventCount); amsh.nextEvent();)
     {
-        float* const out = amsh.outputs[0];
-
         for (uint32_t i=0; i<amsh.midiEventCount; ++i)
         {
             if (amsh.midiEvents[i].size > MidiEvent::kDataSize)
@@ -214,7 +247,7 @@ void DistrhoPluginKars::run(const float**, float** outputs, uint32_t frames, con
             }
         }
 
-        std::memset(out, 0, sizeof(float)*amsh.frames);
+        float* const out = amsh.outputs[0];
 
         for (int i=kMaxNotes; --i >= 0;)
         {
@@ -255,8 +288,8 @@ void DistrhoPluginKars::addSamples(float* out, int voice, uint32_t frames)
         {
             // reuse index and size to save some performance.
             // actual values are release and dist
-            index = 1 + uint32_t(0.01 * fSampleRate); // release, not index
-            size  = i + start - note.off;             // dist, not size
+            index = 1 + uint32_t(fRelease * fSampleRate); // release, not index
+            size  = i + start - note.off;                 // dist, not size
 
             if (size > index)
             {
@@ -283,7 +316,7 @@ void DistrhoPluginKars::addSamples(float* out, int voice, uint32_t frames)
             note.wavetable[index] = sample/2;
         }
 
-        out[i] += gain * sample;
+        out[i] += gain * sample * (fVolume / 100.0f);
     }
 }
 

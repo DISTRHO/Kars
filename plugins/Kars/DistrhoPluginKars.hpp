@@ -32,6 +32,8 @@ public:
     enum Parameters
     {
         paramSustain = 0,
+        paramRelease,
+        paramVolume,
         paramCount
     };
 
@@ -97,6 +99,8 @@ protected:
 
 private:
     bool     fSustain;
+    float    fRelease;
+    float    fVolume;
     double   fSampleRate;
     uint32_t fBlockStart;
 
