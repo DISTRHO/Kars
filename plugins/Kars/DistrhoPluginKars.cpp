@@ -83,14 +83,41 @@ void DistrhoPluginKars::activate()
     }
 }
 
-struct AudioMidiSyncHelper {
+/**
+   Handy class to help keep audio buffer in sync with incoming MIDI events.
+   To use it, create a local variable (on the stack) and call nextEvent() until it returns false.
+   @code
+    for (AudioMidiSyncHelper amsh(outputs, frames, midiEvents, midiEventCount); amsh.nextEvent();)
+    {
+        float* const outL = amsh.outputs[0];
+        float* const outR = amsh.outputs[1];
+
+        for (uint32_t i=0; i<amsh.midiEventCount; ++i)
+        {
+            const MidiEvent& ev(amsh.midiEvents[i]);
+            // ... do something with the midi event
+        }
+
+        renderSynth(outL, outR, amsh.frames);
+    }
+   @endcode
+
+   Some important notes when using this class:
+    1. MidiEvent::frame retains its original value, but it is useless, do not use it.
+    2. The class variables names are be the same as the default ones in the run function.
+       Keep that in mind and try to avoid typos. :)
+ */
+class AudioMidiSyncHelper {
+public:
+    /** Parameters from the run function, adjusted for event sync */
     float** outputs;
     uint32_t frames;
     const MidiEvent* midiEvents;
     uint32_t midiEventCount;
-    uint32_t remainingFrames;
-    uint32_t remainingMidiEventCount;
 
+    /**
+       Constructor, using values from the run function.
+    */
     AudioMidiSyncHelper(float** const o, uint32_t f, const MidiEvent* m, uint32_t mc)
         : outputs(o),
           frames(0),
@@ -99,6 +126,10 @@ struct AudioMidiSyncHelper {
           remainingFrames(f),
           remainingMidiEventCount(mc) {}
 
+    /**
+       Process a batch of events untill no more are available.
+       You must not read any more values from this class after this function returns false.
+    */
     bool nextEvent()
     {
         if (remainingMidiEventCount == 0)
@@ -106,7 +137,7 @@ struct AudioMidiSyncHelper {
             if (remainingFrames == 0)
                 return false;
 
-            for (uint32_t i=0; i<1; ++i)
+            for (uint32_t i=0; i<DISTRHO_PLUGIN_NUM_OUTPUTS; ++i)
                 outputs[i] += frames;
 
             if (midiEventCount != 0)
@@ -138,6 +169,11 @@ struct AudioMidiSyncHelper {
         remainingMidiEventCount -= midiEventCount;
         return true;
     }
+
+private:
+    /** @internal */
+    uint32_t remainingFrames;
+    uint32_t remainingMidiEventCount;
 };
 
 void DistrhoPluginKars::run(const float**, float** outputs, uint32_t frames, const MidiEvent* midiEvents, uint32_t midiEventCount)
