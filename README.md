@@ -7,6 +7,3 @@ This is a DPF'ied build of the karplong DSSI example synth, written by Chris Can
 It implements the basic Karplus-Strong plucked-string synthesis
 algorithm (Kevin Karplus & Alex Strong, "Digital Synthesis of
 Plucked-String and Drum Timbres", Computer Music Journal 1983).
-
-## Screenshot
-![Kars](https://raw.githubusercontent.com/DISTRHO/Kars/master/plugins/Kars/Screenshot.png "Kars")<br/>
