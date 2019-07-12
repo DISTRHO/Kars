@@ -227,10 +227,11 @@ public:
 
         if (totalFramesUsed != 0)
         {
-            // need to modify timestamp of midi events
-            MidiEvent* const rwEvents = const_cast<MidiEvent*>(midiEvents);
             for (uint32_t i=0; i < midiEventCount; ++i)
-                rwEvents[i].frame -= totalFramesUsed;
+            {
+                DISTRHO_SAFE_ASSERT_UINT2_BREAK(midiEvents[i].frame - totalFramesUsed == 0,
+                                                midiEvents[i].frame, totalFramesUsed);
+            }
         }
 
         frames = remainingFrames - firstEventFrame;
@@ -270,7 +271,7 @@ void DistrhoPluginKars::run(const float**, float** outputs, uint32_t frames, con
                 DISTRHO_SAFE_ASSERT_BREAK(note < 128); // kMaxNotes
                 if (velo > 0)
                 {
-                    fNotes[note].on  = fBlockStart + amsh.midiEvents[i].frame;
+                    fNotes[note].on  = fBlockStart;
                     fNotes[note].off = kNoteNull;
                     fNotes[note].velocity = velo;
                     break;
@@ -279,7 +280,7 @@ void DistrhoPluginKars::run(const float**, float** outputs, uint32_t frames, con
             case 0x80:
                 note = data[1];
                 DISTRHO_SAFE_ASSERT_BREAK(note < 128); // kMaxNotes
-                fNotes[note].off = fBlockStart + amsh.midiEvents[i].frame;
+                fNotes[note].off = fBlockStart;
                 break;
             }
         }
