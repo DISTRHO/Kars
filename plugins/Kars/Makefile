@@ -23,10 +23,7 @@ include ../../dpf/Makefile.plugins.mk
 # --------------------------------------------------------------
 # Enable all possible plugin types
 
-ifeq ($(HAVE_JACK),true)
 TARGETS += jack
-endif
-
 TARGETS += dssi_dsp
 TARGETS += lv2_sep
 TARGETS += vst
