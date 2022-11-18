@@ -16,6 +16,7 @@ jobs:
       - uses: distrho/dpf-makefile-action@v1
         with:
           target: ${{ matrix.target }}
+          lto: true
 
   macos:
     strategy:
@@ -29,6 +30,7 @@ jobs:
       - uses: distrho/dpf-makefile-action@v1
         with:
           target: ${{ matrix.target }}
+          lto: true
 
   windows:
     strategy:
@@ -42,6 +44,7 @@ jobs:
       - uses: distrho/dpf-makefile-action@v1
         with:
           target: ${{ matrix.target }}
+          lto: true
 
   pluginval:
     runs-on: ubuntu-20.04
